@@ -24,23 +24,41 @@ def update_user_points(sender, instance, **kwargs):
                 
                 profile.save()
 
+@receiver(pre_save, sender=Task)
+def track_previous_status(sender, instance, **kwargs):
+    if instance.pk: 
+        previous_instance = Task.objects.get(pk=instance.pk)
+        instance.previous_status = previous_instance.status
+    else:
+        instance.previous_status = None 
+
+
+# Update streak based on the status of the task after save
 @receiver(post_save, sender=Task)
 def update_user_streak(sender, instance, created, **kwargs):
     if created:  
         return 
 
+    # Only update streak when the task status changes to 'completed'
     if instance.status == 'completed':
         current_time = timezone.now()
         task_completed_on_time = False
 
+        # Ensure we check the previous status to avoid updating the streak if it was already completed
+        if instance.previous_status == 'completed':
+            # If the previous status was also 'completed', we skip the streak update
+            return
+
+        estimated_time_in_seconds = instance.estimated_time * 60
+
         if (
             instance.due_date and 
             current_time.date() <= instance.due_date and 
-            (instance.time_spent or 0) <= (instance.estimated_time or 0)
+            (instance.time_spent.total_seconds() <= estimated_time_in_seconds)  # Compare total seconds
         ):
             task_completed_on_time = True
         
-        profile = getattr(instance.user, 'profile', None)  # Ensure profile exists
+        profile = getattr(instance.user, 'profile', None)
 
         if profile:
             with transaction.atomic():

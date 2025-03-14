@@ -11,6 +11,7 @@ from django.utils.timezone import now
 from .serializers import TaskSerializer
 from django.utils import timezone
 from django.db.models import Case, When, Value, IntegerField
+from utils import format_time_spent
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -18,7 +19,7 @@ class TagViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Tag.objects.filter(user=self.request.user)
+        return Tag.objects.filter(user=self.request.user).order_by('-id')
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -93,7 +94,7 @@ class KanbanBoardAPIView(APIView):
 class TagListView(APIView):
     def get(self, request):
         """Fetch all tags with their total tasks and completed tasks."""
-        tags = Tag.objects.filter(user = request.user)
+        tags = Tag.objects.filter(user = request.user).order_by('-id')
         serializer = DetailedTagSerializer(tags, many=True)
         return Response(serializer.data)
     
@@ -110,13 +111,16 @@ class StartTimerAPIView(APIView):
 
         session = TaskSession(task=task, user=user, start_time=timezone.now())
         session.save()
+        
+        # Format the time_spent as HH:MM:SS
+        formatted_total_time = format_time_spent(task.time_spent)
 
         return Response(
             {
                 "message": "Timer started.",
                 "session_id": session.id,
                 "start_time": session.start_time,
-                "total_time_spent": task.time_spent,
+                "total_time_spent": formatted_total_time,
             },
             status=status.HTTP_201_CREATED
         )
@@ -129,13 +133,15 @@ class StopTimerAPIView(APIView):
             session = TaskSession.objects.get(id=session_id, user=request.user, end_time__isnull=True)
             session.end_time = timezone.now()
             session.save()
+                        
+            formatted_total_time = format_time_spent(session.task.time_spent)
 
             return Response(
                 {
                     "message": "Timer stopped.",
                     "session_id": session.id,
-                    "duration": session.duration,
-                    "total_time_spent": session.task.time_spent,
+                    "duration": format_time_spent(session.duration),
+                    "total_time_spent": formatted_total_time,
                 },
                 status=status.HTTP_200_OK
             )

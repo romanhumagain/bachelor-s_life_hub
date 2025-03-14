@@ -1,5 +1,6 @@
 from django.db import models
 from authentication.models import User
+from datetime import timedelta
 
 class Tag(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tags')
@@ -30,17 +31,19 @@ class Task(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='todo')
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     estimated_time = models.PositiveIntegerField(help_text="Estimated time in minutes", default=0)
-    time_spent = models.PositiveIntegerField(help_text="Time spent in minutes", default=0)
+    time_spent = models.DurationField(help_text="Time spent", default=timedelta(0))
     tags = models.ManyToManyField(Tag, blank=True, related_name="tasks")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     def update_time_spent(self):
-        total_time = self.sessions.aggregate(models.Sum('duration'))['duration__sum'] or 0
-        self.time_spent = total_time
+        # Get the total time in seconds from the related sessions
+        total_time_in_seconds = self.sessions.aggregate(models.Sum('duration'))['duration__sum'] or timedelta(0)
+        # Store the total time spent in a DurationField
+        self.time_spent = total_time_in_seconds
         self.save(update_fields=['time_spent'])
 
-        
+            
     def __str__(self):
         return self.title
     
@@ -50,14 +53,13 @@ class TaskSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="task_sessions")
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
-    duration = models.PositiveIntegerField(default=0, help_text="Duration in minutes") 
+    duration = models.DurationField(default=timedelta(0), help_text="Duration in HH:MM:SS format")
 
     def calculate_duration(self):
-        """Calculate session duration and store it in minutes."""
         if self.end_time:
-            self.duration = (self.end_time - self.start_time).total_seconds() // 60
+            self.duration = self.end_time - self.start_time
         else:
-            self.duration = 0
+            self.duration = timedelta(0)
 
     def save(self, *args, **kwargs):
         """Update duration and task time spent when a session is saved."""
