@@ -1,10 +1,9 @@
 from django.apps import AppConfig
 
 
-class AuthenticationConfig(AppConfig):
+class TasksConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'authentication'
+    name = 'tasks'
     
     def ready(self):
-        import authentication.signals
-    
+        import tasks.signals

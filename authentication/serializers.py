@@ -10,9 +10,10 @@ class LoginSerializer(serializers.Serializer):
 
 # Register serializer to validate data and create a new user
 class UserSerializer(serializers.ModelSerializer):
+    points = serializers.SerializerMethodField(read_only = True)
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'password', 'profile_picture']
+        fields = ['first_name', 'last_name', 'email', 'password', 'points']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -36,3 +37,6 @@ class UserSerializer(serializers.ModelSerializer):
         if len(value) < 8:
           raise serializers.ValidationError("Password must be at least 8 characters long.")
         return value
+    
+    def get_points(self, obj):
+        return obj.profile.points

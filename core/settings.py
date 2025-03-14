@@ -47,7 +47,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     
-    "authentication"
+    "authentication",
+    "tasks", 
+    "notifications"
 ]
 
 EXTERNAL_APPS = [
@@ -185,15 +187,15 @@ SIMPLE_JWT = {
 # for admin panel theme using jazzmin
 JAZZMIN_SETTINGS = {
     # title of the window
-    "site_title": "Eventify Admin",
+    "site_title": "Bacehlor's Life Hub Admin",
     # Title on the login screen
-    "site_header": "Eventify",
+    "site_header": "Bacehlor's Life Hub",
     # Title on the brand
-    "site_brand": "Eventify",
+    "site_brand": "Bacehlor's Life Hub",
     # Welcome text on the login screen
-    "welcome_sign": "Welcome to the Eventify Admin Panel",
+    "welcome_sign": "Welcome to the Bacehlor's Life Hub Admin Panel",
     # Copyright on the footer
-    "copyright": "Eventify",
+    "copyright": "Bacehlor's Life Hub",
 }
 JAZZMIN_UI_TWEAKS = {
     "theme": "flatly",
