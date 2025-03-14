@@ -29,20 +29,37 @@ class User(AbstractBaseUser, PermissionsMixin):
   
   
 class Profile(models.Model):
-  user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-  points = models.PositiveIntegerField(default=0)
-  level = models.PositiveIntegerField(default=0)
-  streak = models.IntegerField(default=0)
-  highest_streak = models.IntegerField(default=0) 
-  
-  updated_at = models.DateTimeField(auto_now=True)
-  
-  def __str__(self):
-    return f"{self.user.first_name} {self.user.last_name}'s Profile"
-  
-  
-  
-  
-  
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    points = models.PositiveIntegerField(default=0)
+    level = models.PositiveIntegerField(default=1) 
+    streak = models.IntegerField(default=0)
+    highest_streak = models.IntegerField(default=0)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def calculate_level(self):
+        """Determine level based on points."""
+        if self.points < 100:
+            return 1
+        elif 100 <= self.points < 250:
+            return 2
+        elif 250 <= self.points < 500:
+            return 3
+        elif 500 <= self.points < 750:
+            return 4
+        elif 750 <= self.points < 1000:
+            return 5
+        else:
+            return 6  # For points >= 1000
+
+    def save(self, *args, **kwargs):
+      new_level = self.calculate_level()
+      if new_level != self.level: 
+          self.level = new_level
+      super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.first_name} {self.user.last_name}'s Profile - Level {self.level}"
+
   
   
