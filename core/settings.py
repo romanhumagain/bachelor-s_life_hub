@@ -30,6 +30,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 
 SECRET_KEY = env("SECRET_KEY")
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -49,7 +50,6 @@ INSTALLED_APPS = [
     
     "authentication",
     "tasks", 
-    "notifications"
 ]
 
 EXTERNAL_APPS = [
@@ -57,6 +57,7 @@ EXTERNAL_APPS = [
     "corsheaders",
     "rest_framework_simplejwt",
     'rest_framework_simplejwt.token_blacklist',
+    'django_celery_beat',
 ]
 
 INSTALLED_APPS += EXTERNAL_APPS
@@ -186,15 +187,10 @@ SIMPLE_JWT = {
 
 # for admin panel theme using jazzmin
 JAZZMIN_SETTINGS = {
-    # title of the window
     "site_title": "Bacehlor's Life Hub Admin",
-    # Title on the login screen
     "site_header": "Bacehlor's Life Hub",
-    # Title on the brand
     "site_brand": "Bacehlor's Life Hub",
-    # Welcome text on the login screen
     "welcome_sign": "Welcome to the Bacehlor's Life Hub Admin Panel",
-    # Copyright on the footer
     "copyright": "Bacehlor's Life Hub",
 }
 JAZZMIN_UI_TWEAKS = {
@@ -202,5 +198,23 @@ JAZZMIN_UI_TWEAKS = {
 }
 
 
+#  for handling email sending
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+
+
 # settings.py
 AUTH_USER_MODEL = 'authentication.User'
+
+CORS_ALLOW_ALL_ORIGINS=True
+
+
+# for celery
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'

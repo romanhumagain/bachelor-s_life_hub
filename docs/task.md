@@ -12,11 +12,30 @@
 
 | HTTP Method | Endpoint                                              | Description                                        | Request Body | Response Body                         |
 |-------------|-------------------------------------------------------|----------------------------------------------------|--------------|---------------------------------------|
+
 | **GET**     | `/task/tasks/`                                        | Retrieve a list of tasks                          | None         | List of tasks                         |
 | **POST**    | `/task/tasks/`                                        | Create a new task                                 | Task data    | Created task                          |
 | **GET**     | `/task/tasks/{id}/`                                   | Retrieve a specific task                          | None         | Task data                             |
 | **PUT**     | `/task/tasks/{id}/`                                   | Update a specific task                            | Updated task data | Updated task data                  |
 | **DELETE**  | `/task/tasks/{id}/`                                   | Delete a specific task                            | None         | Success message                       |
+
+
+#### Task request body (for adding task)
+``` json 
+{
+    "title": "Test Title",
+    "description": "Description for this task.",
+    "due_date": "2025-03-20",
+    "status": "todo",
+    "priority": "medium",
+    "estimated_time": 120,
+    "tags": [
+        {"name":"project"}, 
+        {"name":"academic"}
+    ]
+}
+
+```
 
 ### Tag Endpoints
 
@@ -26,7 +45,9 @@
 | **POST**    | `/task/tags/`                                         | Create a new tag                                  | Tag data     | Created tag                           |
 | **GET**     | `/task/tags/{id}/`                                    | Retrieve a specific tag                           | None         | Tag data                              |
 | **PUT**     | `/task/tags/{id}/`                                    | Update a specific tag                             | Updated tag data | Updated tag data                    |
-| **DELETE**  | `/task/tags/{id}/`                                    | Delete a specific tag                             | None         | Success message                       |
+| **DELETE**  | `/task/tags/{id}/`                                    | Delete a specific tag                             | None         | Success message    
+
+                   |
 
 ### Timer Endpoints
 
@@ -48,3 +69,6 @@
 | HTTP Method | Endpoint                                              | Description                                        | Request Body | Response Body                         |
 |-------------|-------------------------------------------------------|----------------------------------------------------|--------------|---------------------------------------|
 | **GET**     | `/task/milestones/`                                    | Get a list of tags with total and completed task counts and tags rewards | None         | Tags data with task completion info   |
+
+
+

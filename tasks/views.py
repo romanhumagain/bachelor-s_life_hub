@@ -12,7 +12,7 @@ from .serializers import TaskSerializer
 from django.utils import timezone
 from django.db.models import Case, When, Value, IntegerField
 from utils import format_time_spent
-
+from django.db.models import Count, Q, F
 
 class TagViewSet(viewsets.ModelViewSet):
     serializer_class = TagSerializer
@@ -47,6 +47,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         context["request"] = self.request
         return context
 
+# to handle the user stats in dashboard
 class DashboardAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
@@ -54,51 +55,48 @@ class DashboardAPIView(APIView):
         task_count = Task.objects.filter(user=request.user).count()
         completed_task_count = Task.objects.filter(user=request.user, status='completed').count()
         points = getattr(request.user.profile, 'points', 0)  
-        today = now().date()
+        level = getattr(request.user.profile, 'level', 1)
+        streak = getattr(request.user.profile, 'streak', 0)
+        highest_streak = getattr(request.user.profile, 'highest_streak', 0)
         
+        # Get Next Milestone
+        next_milestone = Tag.objects.filter(user=request.user).annotate(
+            total_tasks=Count('tasks'),
+            completed_tasks=Count('tasks', filter=Q(tasks__status='completed'))
+        ).filter(~Q(total_tasks=F('completed_tasks'))).order_by('-total_tasks').first()
+
+        milestone_data = None
+        if next_milestone:
+            milestone_data = {
+                "id": next_milestone.id,
+                "name": next_milestone.name,
+                "total_tasks": next_milestone.total_tasks,
+                "completed_tasks": next_milestone.completed_tasks,
+                "remaining_tasks": next_milestone.total_tasks - next_milestone.completed_tasks
+            }
+
         context = {
             'total_task_count': task_count,
             'completed_task_count': completed_task_count, 
-            'points': points,   
-        }
-        
-        return Response(context, status=status.HTTP_200_OK)
-    
-    
-class KanbanBoardAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-       
-        points = request.user.profile.points
-        todo_tasks = Task.objects.filter(user=request.user, status='todo') .order_by('due_date', 'priority') 
-        in_progress_tasks = Task.objects.filter(user=request.user, status='in_progress').order_by('due_date', 'priority')  
-        completed_tasks = Task.objects.filter(user=request.user, status='completed').order_by('due_date', 'priority')
-
-        # Serialize the tasks
-        todo_serializer = TaskSerializer(todo_tasks, many=True)
-        in_progress_serializer = TaskSerializer(in_progress_tasks, many=True)
-        completed_serializer = TaskSerializer(completed_tasks, many=True)
-
-        # Prepare the response context
-        context = {
-            'points':points,
-            'todo_tasks': todo_serializer.data,
-            'in_progress_tasks': in_progress_serializer.data,
-            'completed_tasks': completed_serializer.data,
+            'points': points, 
+            'level': level,
+            'streak': streak,
+            'highest_streak': highest_streak,
+            'next_milestone': milestone_data  
         }
 
         return Response(context, status=status.HTTP_200_OK)
-
-
+      
+# for the user milestones
 class TagListView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         """Fetch all tags with their total tasks and completed tasks."""
         tags = Tag.objects.filter(user = request.user).order_by('-id')
         serializer = DetailedTagSerializer(tags, many=True)
         return Response(serializer.data)
     
-
+# to handle the task timer session
 class StartTimerAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
@@ -156,9 +154,11 @@ class CancelTimerSessionAPIView(APIView):
         
         try:
             session = TaskSession.objects.get(id=session_id, user=request.user)
+            
+            if session.end_time:
+                return Response({"detail": "You cannot perform this action. Session already saved"}, status=status.HTTP_400_BAD_REQUEST)
             session.delete()
-        
             return Response({"message": "Timer session canceled successfully."}, status=status.HTTP_204_NO_CONTENT)
         
         except TaskSession.DoesNotExist:
-            return Response({"error": "Session not found or you don't have permission to delete it."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "Session not found or you don't have permission to delete it."}, status=status.HTTP_404_NOT_FOUND)

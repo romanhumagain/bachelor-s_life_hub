@@ -19,7 +19,7 @@ class User(AbstractBaseUser, PermissionsMixin):
   updated_at = models.DateTimeField(auto_now = True)
   last_login = models.DateTimeField(auto_now = True)
   
-  USERNAME_FIELD = 'email' # field to use for login
+  USERNAME_FIELD = 'email'
   REQUIRED_FIELDS = []
   
   objects = UserManager()
@@ -59,7 +59,7 @@ class Profile(models.Model):
       super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.user.first_name} {self.user.last_name}'s Profile - Level {self.level}"
+        return f"{self.user.first_name} {self.user.last_name}'s Profile"
 
   
   
