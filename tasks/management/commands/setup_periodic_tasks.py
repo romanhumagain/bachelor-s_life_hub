@@ -23,28 +23,28 @@
 
 
 
-from django.core.management.base import BaseCommand
-from django_celery_beat.models import PeriodicTask, IntervalSchedule
-import json
+# from django.core.management.base import BaseCommand
+# from django_celery_beat.models import PeriodicTask, IntervalSchedule
+# import json
 
-class Command(BaseCommand):
-    help = "Sets up periodic task for sending dummy emails every 5 minutes"
+# class Command(BaseCommand):
+#     help = "Sets up periodic task for sending dummy emails every 5 minutes"
 
-    def handle(self, *args, **kwargs):
-        # Create an interval schedule for 5 minutes
-        schedule, created = IntervalSchedule.objects.get_or_create(
-            every=5,  # Every 5 minutes
-            period=IntervalSchedule.MINUTES,  # Specify minutes
-        )
+#     def handle(self, *args, **kwargs):
+#         # Create an interval schedule for 5 minutes
+#         schedule, created = IntervalSchedule.objects.get_or_create(
+#             every=5,  # Every 5 minutes
+#             period=IntervalSchedule.MINUTES,  # Specify minutes
+#         )
 
-        # Set up the periodic task for sending the dummy email
-        PeriodicTask.objects.update_or_create(
-            name="Dummy Email Reminder",  # Name of the task
-            defaults={
-                'interval': schedule,  # Link the schedule
-                'task': 'tasks.tasks_reminder.send_dummy_email',  # The task to run
-                'args': json.dumps([]),  # Arguments for the task, empty in this case
-            }
-        )
+#         # Set up the periodic task for sending the dummy email
+#         PeriodicTask.objects.update_or_create(
+#             name="Dummy Email Reminder",  # Name of the task
+#             defaults={
+#                 'interval': schedule,  # Link the schedule
+#                 'task': 'tasks.tasks_reminder.send_dummy_email',  # The task to run
+#                 'args': json.dumps([]),  # Arguments for the task, empty in this case
+#             }
+#         )
 
-        self.stdout.write(self.style.SUCCESS("Successfully scheduled the dummy email reminder every 5 minutes!"))
+#         self.stdout.write(self.style.SUCCESS("Successfully scheduled the dummy email reminder every 5 minutes!"))

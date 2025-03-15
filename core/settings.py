@@ -58,6 +58,7 @@ EXTERNAL_APPS = [
     "rest_framework_simplejwt",
     'rest_framework_simplejwt.token_blacklist',
     'django_celery_beat',
+    'django_celery_results'
 ]
 
 INSTALLED_APPS += EXTERNAL_APPS
@@ -213,8 +214,42 @@ AUTH_USER_MODEL = 'authentication.User'
 CORS_ALLOW_ALL_ORIGINS=True
 
 
-# for celery
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
+# # for celery
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'
+# CELERY_ACCEPT_CONTENT = ['application/json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_SERIALIZER = 'json'
+
+# CELERY_TIMEZONE = 'Asia/Kathmandu'
+
+
+# CELERY_RESULT_BACKEND = 'django-db'
+# CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+
+# Claude
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Using Redis as broker
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Kathmandu'  # Set to Nepal timezone
+
+# Django Celery Beat Settings
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+
+from celery.schedules import crontab
+
+# Schedule for Celery Beat
+CELERY_BEAT_SCHEDULE = {
+    'send-daily-task-reminders': {
+        'task': 'tasks.tasks.send_task_reminder_emails',
+        'schedule': crontab(hour=18, minute=0),  # Run daily at 6:00 PM
+    },
+    'send-test-email': {
+        'task': 'tasks.tasks.send_test_email',
+        'schedule': timedelta(minutes=1),  # Run every minute
+    },
+}

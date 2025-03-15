@@ -49,8 +49,25 @@
   
 - **Tag Retrieval**: 
   - The `GET /task/tags/` endpoint will return all the tags that were previously created by the user.
+    #### Response
 
-  
+    ```json
+    [
+        {
+            "id": 17,
+            "name": "coding"
+        },
+        {
+            "id": 16,
+            "name": "academic"
+        },
+        {
+            "id": 15,
+            "name": "project"
+        }
+    ]
+    ```
+
 # Timer Endpoints
 
 | HTTP Method | Endpoint                                              | Description                                          | Request Body                                                | Response Body                                  |

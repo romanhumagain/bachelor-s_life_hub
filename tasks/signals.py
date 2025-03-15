@@ -24,48 +24,45 @@ def update_user_points(sender, instance, **kwargs):
                 
                 profile.save()
 
+
 @receiver(pre_save, sender=Task)
 def track_previous_status(sender, instance, **kwargs):
     if instance.pk: 
         previous_instance = Task.objects.get(pk=instance.pk)
         instance.previous_status = previous_instance.status
     else:
-        instance.previous_status = None 
+        instance.previous_status = None
 
 
-# Update streak based on the status of the task after save
 @receiver(post_save, sender=Task)
 def update_user_streak(sender, instance, created, **kwargs):
     if created:  
-        return 
+        return  
 
-    # Only update streak when the task status changes to 'completed'
-    if instance.status == 'completed':
-        current_time = timezone.now()
-        task_completed_on_time = False
+    profile = getattr(instance.user, 'profile', None)
 
-        # Ensure we check the previous status to avoid updating the streak if it was already completed
-        if instance.previous_status == 'completed':
-            # If the previous status was also 'completed', we skip the streak update
-            return
+    if profile:
+        with transaction.atomic():
+            # **CASE 1: User marks task as "completed"**
+            if instance.status == 'completed' and instance.previous_status != 'completed':
+                current_time = timezone.now()
+                estimated_time_in_seconds = instance.estimated_time * 60
+                
+                # Check if the task was completed within the due date and estimated time
+                task_completed_on_time = (
+                    instance.due_date and
+                    current_time.date() <= instance.due_date and
+                    (instance.time_spent.total_seconds() <= estimated_time_in_seconds)
+                )
 
-        estimated_time_in_seconds = instance.estimated_time * 60
-
-        if (
-            instance.due_date and 
-            current_time.date() <= instance.due_date and 
-            (instance.time_spent.total_seconds() <= estimated_time_in_seconds)  # Compare total seconds
-        ):
-            task_completed_on_time = True
-        
-        profile = getattr(instance.user, 'profile', None)
-
-        if profile:
-            with transaction.atomic():
                 if task_completed_on_time:
                     profile.streak += 1
                     profile.highest_streak = max(profile.highest_streak, profile.streak)
                 else:
-                    profile.streak = 0 
-                
-                profile.save()
+                    profile.streak = 0  
+
+            # **CASE 2: User moves a completed task back to "to-do" or "in-progress" (Fraud Prevention)**
+            elif instance.previous_status == 'completed' and instance.status in ['todo', 'in_progress']:
+                profile.streak = max(0, profile.streak - 1)  # Deduct streak but ensure it doesn't go negative
+
+            profile.save()
