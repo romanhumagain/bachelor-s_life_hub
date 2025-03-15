@@ -32,7 +32,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG", default=False)
 
 ALLOWED_HOSTS = []
 
@@ -155,7 +155,6 @@ LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = 'Asia/Kathmandu'
 
-
 USE_I18N = True
 
 USE_TZ = True
@@ -214,43 +213,19 @@ AUTH_USER_MODEL = 'authentication.User'
 
 CORS_ALLOW_ALL_ORIGINS=True
 
-
-# # for celery
-# CELERY_BROKER_URL = 'redis://localhost:6379/0'
-# CELERY_ACCEPT_CONTENT = ['application/json']
-# CELERY_TASK_SERIALIZER = 'json'
-# CELERY_RESULT_SERIALIZER = 'json'
-
-# CELERY_TIMEZONE = 'Asia/Kathmandu'
-
-
-# CELERY_RESULT_BACKEND = 'django-db'
-# CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-
-
-# Claude
-# Celery Configuration
-CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Using Redis as broker
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
+# Celery settings
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Asia/Kathmandu'  # Set to Nepal timezone
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_TIMEZONE = 'Asia/Kathmandu'
 
-# Django Celery Beat Settings
+# Celery Beat Scheduler
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
-
-from celery.schedules import crontab
-
-# Schedule for Celery Beat
-CELERY_BEAT_SCHEDULE = {
-    'send-daily-task-reminders': {
-        'task': 'tasks.tasks.send_task_reminder_emails',
-        'schedule': crontab(hour=18, minute=0),  # Run daily at 6:00 PM
-    },
-    'send-test-email': {
-        'task': 'tasks.tasks.send_test_email',
-        'schedule': timedelta(minutes=1),  # Run every minute
-    },
-}
+# command to run celery
+"""
+celery -A core worker --loglevel=info
+celery -A core beat --loglevel=info
+"""

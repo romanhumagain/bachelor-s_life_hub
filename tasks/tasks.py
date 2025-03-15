@@ -3,15 +3,11 @@ from django.core.mail import send_mail
 from django.utils import timezone
 from django.conf import settings
 from datetime import timedelta
+from .models import Task
 
 @shared_task
 def send_task_reminder_emails():
-    """
-    Send reminder emails to all users who have tasks due tomorrow
-    """
-    # Import models inside the function to avoid circular imports
-    from .models import Task
-    
+        
     # Calculate tomorrow's date
     tomorrow = timezone.now().date() + timedelta(days=1)
     
@@ -52,28 +48,3 @@ Your Task Management System
     
     return f"Sent reminders for {len(due_tasks)} tasks to {len(user_tasks)} users"
 
-@shared_task
-def send_test_email():
-    """
-    Send a test email every minute for testing purposes
-    """
-    current_time = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    subject = f"Test Email at {current_time}"
-    message = f"""Hello,
-
-This is a test email sent at {current_time} from your Django Celery setup.
-
-Best regards,
-Your Task Management System
-"""
-    
-    send_mail(
-        subject=subject,
-        message=message,
-        from_email=settings.EMAIL_HOST_USER,
-        recipient_list=['romanhumagain69@gmail.com'],
-        fail_silently=False,
-    )
-    
-    return f"Test email sent at {current_time}"
