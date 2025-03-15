@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.db.models import Case, When, Value, IntegerField
 from utils import format_time_spent
 from django.db.models import Count, Q, F
+from datetime import timedelta
 
 class TagViewSet(viewsets.ModelViewSet):
     serializer_class = TagSerializer
@@ -162,3 +163,42 @@ class CancelTimerSessionAPIView(APIView):
         
         except TaskSession.DoesNotExist:
             return Response({"detail": "Session not found or you don't have permission to delete it."}, status=status.HTTP_404_NOT_FOUND)
+        
+        
+class TaskSpentTimeAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        task_id = kwargs.get('task_id')
+        try:
+            task = Task.objects.get(id=task_id)
+        except Task.DoesNotExist:
+            return Response({"detail": "Task doesn't exist"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Parse the time string from frontend format HH:MM:SS
+        time_spent_str = request.data.get('time_spent')  # e.g., "00:07:51"
+        if not time_spent_str:
+            return Response({"detail": "Time spent is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Convert time_spent_str (HH:MM:SS) to a timedelta object
+            h, m, s = map(int, time_spent_str.split(':'))
+            new_spent_time = timedelta(hours=h, minutes=m, seconds=s)
+        except ValueError:
+            return Response({"detail": "Invalid time format. Use HH:MM:SS."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Calculate the total time spent (adding previous time_spent and new time)
+        previous_spent_time = task.time_spent
+        total_time_spent = previous_spent_time + new_spent_time
+        
+        # Save the updated time_spent to the task
+        task.time_spent = total_time_spent
+        task.save()
+        
+        context = {
+            'detail':'Time duration saved.',
+            'duration':format_time_spent(new_spent_time),
+            'total_spent_time':format_time_spent(task.time_spent)
+        }
+        
+        return Response(context, status=status.HTTP_200_OK)
