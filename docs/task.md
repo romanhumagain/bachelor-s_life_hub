@@ -41,13 +41,16 @@
 | HTTP Method | Endpoint                                              | Description                                        | Request Body | Response Body                         |
 |-------------|-------------------------------------------------------|----------------------------------------------------|--------------|---------------------------------------|
 | **GET**     | `/task/tags/`                                         | Retrieve a list of tags                           | None         | List of tags                          |
-| **POST**    | `/task/tags/`                                         | Create a new tag                                  | Tag data     | Created tag                           |
-| **GET**     | `/task/tags/{id}/`                                    | Retrieve a specific tag                           | None         | Tag data                              |
-| **PUT**     | `/task/tags/{id}/`                                    | Update a specific tag                             | Updated tag data | Updated tag data                    |
-| **DELETE**  | `/task/tags/{id}/`                                    | Delete a specific tag                             | None         | Success message    
+| **POST**    | `/task/tags/`                                         | Create a new tag                                  | Tag data     | Created tags                           |
 
-                   |
+### Notes
+- **Tag Creation**: 
+  - You do **not** need to create tags separately. When adding a task, tags will be created automatically based on the tags provided during task creation.
+  
+- **Tag Retrieval**: 
+  - The `GET /task/tags/` endpoint will return all the tags that were previously created by the user.
 
+  
 # Timer Endpoints
 
 | HTTP Method | Endpoint                                              | Description                                          | Request Body                                                | Response Body                                  |
@@ -87,11 +90,7 @@
   ```json
   { "time_spent": "00:20:10" }
 
-### Dashboard Endpoints
-
-| HTTP Method | Endpoint                                              | Description                                        | Request Body | Response Body                         |
-|-------------|-------------------------------------------------------|----------------------------------------------------|--------------|---------------------------------------|
-| **GET**     | `/task/dashboard/`                                     | Get the user's dashboard data (task count, points) | None         | Dashboard data                        |
+                       |
 
 ### Tag List Endpoints
 
