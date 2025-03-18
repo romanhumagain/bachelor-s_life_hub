@@ -14,6 +14,8 @@ from django.db.models import Case, When, Value, IntegerField
 from utils import format_time_spent
 from django.db.models import Count, Q, F
 from datetime import timedelta
+from django.shortcuts import get_object_or_404
+from django.db import transaction
 
 class TagViewSet(viewsets.ModelViewSet):
     serializer_class = TagSerializer
@@ -124,46 +126,44 @@ class StartTimerAPIView(APIView):
             status=status.HTTP_201_CREATED
         )
         
+
 class StopTimerAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    
-    def post(self, request, session_id):
-        try:
-            session = TaskSession.objects.get(id=session_id, user=request.user, end_time__isnull=True)
-            session.end_time = timezone.now()
-            session.save()
-                        
-            formatted_total_time = format_time_spent(session.task.time_spent)
 
-            return Response(
-                {
-                    "message": "Timer stopped.",
-                    "session_id": session.id,
-                    "duration": format_time_spent(session.duration),
-                    "total_time_spent": formatted_total_time,
-                },
-                status=status.HTTP_200_OK
-            )
+    def post(self, request, task_id):
+        task = get_object_or_404(Task, id=task_id, user=request.user)
+
+        try:
+            with transaction.atomic():
+                session = TaskSession.objects.select_for_update().get(task=task, user=request.user, end_time__isnull=True)
+                session.end_time = timezone.now()
+                session.save()
+
+                return Response(
+                    {
+                        "message": "Timer stopped.",
+                        "session_id": session.id,
+                        "duration": format_time_spent(session.duration),
+                        "total_time_spent": format_time_spent(session.task.time_spent),
+                    },
+                    status=status.HTTP_200_OK
+                )
         except TaskSession.DoesNotExist:
             return Response({"error": "No active session found"}, status=status.HTTP_400_BAD_REQUEST)
 
 class CancelTimerSessionAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
-        session_id = kwargs.get('session_id')
-        
+    def delete(self, request, task_id):
+        task = get_object_or_404(Task, id=task_id, user=request.user)
+
         try:
-            session = TaskSession.objects.get(id=session_id, user=request.user)
-            
-            if session.end_time:
-                return Response({"detail": "You cannot perform this action. Session already saved"}, status=status.HTTP_400_BAD_REQUEST)
+            session = TaskSession.objects.get(task=task, user=request.user, end_time__isnull=True)
             session.delete()
-            return Response({"message": "Timer session canceled successfully."}, status=status.HTTP_204_NO_CONTENT)
-        
+
+            return Response({"detail": "Timer session canceled successfully."}, status=status.HTTP_204_NO_CONTENT)
         except TaskSession.DoesNotExist:
-            return Response({"detail": "Session not found or you don't have permission to delete it."}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response({"detail": "No active session found to cancel."}, status=status.HTTP_404_NOT_FOUND)
         
 class TaskSpentTimeAPIView(APIView):
     permission_classes = [IsAuthenticated]

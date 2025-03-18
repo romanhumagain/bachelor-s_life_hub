@@ -74,8 +74,8 @@
 |-------------|-------------------------------------------------------|------------------------------------------------------|-------------------------------------------------------------|------------------------------------------------|
 | **POST**    | `/task/{task_id}/spent-time/`                          | Update the time spent on a specific task.            | ```json { "time_spent": "00:20:10" } ```                     | ```json { "detail": "Time duration saved.", "duration": "00:20:10", "total_spent_time": "01:41:10" } ``` |
 | **POST**    | `/task/{task_id}/start-timer-session/`                 | Start a timer session for a task (Returns session_id)| None                                                        | ```json { "message": "Timer started.", "session_id": 31, "start_time": "2025-03-15T07:31:34.138334Z", "total_time_spent": "00:07:51" } ``` |
-| **POST**    | `/task/save-timer-session/{session_id}/`               | Save a timer session for a task                      | None                                                        | ```json { "message": "Timer stopped.", "session_id": 31, "duration": "00:00:28", "total_time_spent": "00:08:19" } ``` |
-| **DELETE**  | `/task/cancel-timer-session/{session_id}/`             | Cancel a timer session                               | None                                                        | ```json { "message": "Timer session canceled successfully." } ``` |
+| **POST**    | `/task/save-timer-session/{task_id}/`               | Save a timer session for a task                      | None                                                        | ```json { "message": "Timer stopped.", "session_id": 31, "duration": "00:00:28", "total_time_spent": "00:08:19" } ``` |
+| **DELETE**  | `/task/cancel-timer-session/{task_id}/`             | Cancel a timer session                               | None                                                        | ```json { "message": "Timer session canceled successfully." } ``` |
 
 ---
 
