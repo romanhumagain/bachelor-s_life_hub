@@ -8,29 +8,37 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
 app = Celery('core')
 
-# Configure the timezone
 app.conf.enable_utc = False
 app.conf.update(
                 CELERY_WORKER_POOL='solo',
                 timezone='Asia/Kathmandu'
                 )
 
-# Load configuration from Django settings
 app.config_from_object(settings, namespace='CELERY')
 
-# Celery Beat Settings
 app.conf.beat_schedule = {
+    
+    # Production schedule
     'send-task-reminder-emails-daily': {
         'task': 'tasks.tasks.send_task_reminder_emails', 
-        'schedule': crontab(minute=0, hour=0),
+        'schedule': crontab(minute=0, hour=0),   # Run at 12:00 AM (midnight) Nepal time
     },
-    # 'send-test-email-every-minute': {
-    #     'task': 'tasks.tasks.send_test_email',
-    #     'schedule': crontab(minute=0, hour=0), 
-    # },
+    
+    # Test schedules
+    'test-task-reminder-every-5-minutes': {
+        'task': 'tasks.tasks.send_task_reminder_emails',
+        'schedule': crontab(minute='*/5'),  # Run every 5 minutes
+    },
+    
+    'test-task-reminder-at-930pm': {
+        'task': 'tasks.tasks.send_task_reminder_emails',
+        'schedule': crontab(minute=30, hour=21),  # Run at 9:30 PM
+    },
 }
 
-# Autodiscover tasks in your apps
+
+app.conf.broker_connection_retry_on_startup = True
+
 app.autodiscover_tasks()
 
 @app.task(bind=True)

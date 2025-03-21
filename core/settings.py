@@ -215,14 +215,18 @@ CORS_ALLOW_ALL_ORIGINS=True
 
 # Celery settings
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_BACKEND = 'django-db'
-CELERY_TIMEZONE = 'Asia/Kathmandu'
+
+accept_content = ['json']
+result_serializer = 'json'
+task_serializer = 'json'
+result_backend = 'django-db'
+timezone = 'Asia/Kathmandu'
+
+broker_connection_retry_on_startup = True
 
 # Celery Beat Scheduler
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
 
 # command to run celery
 """

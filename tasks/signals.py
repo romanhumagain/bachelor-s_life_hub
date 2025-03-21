@@ -43,7 +43,6 @@ def update_user_streak(sender, instance, created, **kwargs):
 
     if profile:
         with transaction.atomic():
-            # **CASE 1: User marks task as "completed"**
             if instance.status == 'completed' and instance.previous_status != 'completed':
                 current_time = timezone.now()
                 estimated_time_in_seconds = instance.estimated_time * 60
@@ -61,8 +60,7 @@ def update_user_streak(sender, instance, created, **kwargs):
                 else:
                     profile.streak = 0  
 
-            # **CASE 2: User moves a completed task back to "to-do" or "in-progress" (Fraud Prevention)**
-            elif instance.previous_status == 'completed' and instance.status in ['todo', 'in_progress']:
-                profile.streak = max(0, profile.streak - 1)  # Deduct streak but ensure it doesn't go negative
+            elif instance.previous_status == 'completed':
+                profile.streak = max(0, profile.streak - 1)
 
             profile.save()

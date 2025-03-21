@@ -175,19 +175,16 @@ class TaskSpentTimeAPIView(APIView):
         except Task.DoesNotExist:
             return Response({"detail": "Task doesn't exist"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Parse the time string from frontend format HH:MM:SS
-        time_spent_str = request.data.get('time_spent')  # e.g., "00:07:51"
+        time_spent_str = request.data.get('time_spent')
         if not time_spent_str:
             return Response({"detail": "Time spent is required"}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            # Convert time_spent_str (HH:MM:SS) to a timedelta object
             h, m, s = map(int, time_spent_str.split(':'))
             new_spent_time = timedelta(hours=h, minutes=m, seconds=s)
         except ValueError:
             return Response({"detail": "Invalid time format. Use HH:MM:SS."}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Calculate the total time spent (adding previous time_spent and new time)
         previous_spent_time = task.time_spent
         total_time_spent = previous_spent_time + new_spent_time
         
